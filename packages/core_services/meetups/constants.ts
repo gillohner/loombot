@@ -54,6 +54,8 @@ export interface MeetupsConfig {
 	periodicUnpinPrevious?: boolean;
 	/** Timeline range for periodic broadcast (default: "week") */
 	periodicRange?: TimelineRangeId;
+	/** Disable URL previews in messages (default: true) */
+	disableLinkPreview?: boolean;
 }
 
 export interface MeetupsState {
@@ -271,6 +273,12 @@ export const MEETUPS_CONFIG_SCHEMA: JSONSchema = {
 			description: "Timeline range for periodic broadcast",
 			enum: ["week", "2weeks", "30days"],
 			default: "week",
+		},
+		disableLinkPreview: {
+			type: "boolean",
+			title: "Disable Link Preview",
+			description: "Disable URL previews in messages (Telegram only renders the first URL preview)",
+			default: true,
 		},
 	},
 	required: ["calendars"],

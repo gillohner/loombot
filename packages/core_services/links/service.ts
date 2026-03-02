@@ -53,6 +53,7 @@ const service = defineService({
 				options: {
 					parse_mode: "HTML",
 					replaceGroup: LINKS_REPLACE_GROUP,
+					disable_web_page_preview: config.disableLinkPreview ?? true,
 				},
 			});
 		},
@@ -66,6 +67,8 @@ const service = defineService({
 			const match = /^c:(\d+)/.exec(data);
 			if (!match) return none();
 
+			const rawConfig = ev.serviceConfig || {};
+			const config: LinksConfig = { ...DEFAULT_CONFIG, ...rawConfig };
 			const idx = Number(match[1]);
 			const categories = getCategories(ev.datasets);
 			const text = renderCategory(categories, idx);
@@ -76,6 +79,7 @@ const service = defineService({
 				options: {
 					parse_mode: "HTML",
 					replaceGroup: LINKS_REPLACE_GROUP,
+					disable_web_page_preview: config.disableLinkPreview ?? true,
 				},
 			});
 		},

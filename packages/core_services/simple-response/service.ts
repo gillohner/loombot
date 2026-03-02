@@ -36,7 +36,7 @@ const service = defineService({
 			return reply(config.message, {
 				options: {
 					parse_mode: "HTML",
-					disable_web_page_preview: config.disableLinkPreview ?? false,
+					disable_web_page_preview: config.disableLinkPreview ?? true,
 				},
 			});
 		},

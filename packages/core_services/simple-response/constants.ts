@@ -46,7 +46,9 @@ export const SIMPLE_RESPONSE_CONFIG_SCHEMA: JSONSchema = {
 		},
 		disableLinkPreview: {
 			type: "boolean",
-			description: "Whether to disable link previews (default: false)",
+			title: "Disable Link Preview",
+			description: "Disable URL previews in messages (Telegram only renders the first URL preview)",
+			default: true,
 		},
 		messageTtl: {
 			type: "integer",
@@ -94,5 +96,5 @@ export function validateConfig(data: unknown): ValidationResult {
 
 export const DEFAULT_CONFIG: SimpleResponseConfig = {
 	message: "Hello! This is a simple response.",
-	disableLinkPreview: false,
+	disableLinkPreview: true,
 };

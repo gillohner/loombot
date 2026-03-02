@@ -329,6 +329,11 @@ async function handleUI(ctx: Context, r: Extract<ServiceResponse, { kind: "ui" }
 				break;
 		}
 
+		// Extract service options (e.g. disable_web_page_preview) but exclude
+		// internal-only keys that the adapter handles separately.
+		const { replaceGroup: _rg, cleanupGroup: _cg, ...serviceOpts } =
+			(r.options as Record<string, unknown>) ?? {};
+
 		let msg;
 		if (result.photo) {
 			msg = await ctx.replyWithPhoto(result.photo, {
@@ -336,12 +341,14 @@ async function handleUI(ctx: Context, r: Extract<ServiceResponse, { kind: "ui" }
 				parse_mode: "HTML",
 				// @ts-ignore - Grammy types are strict, but this is valid
 				reply_markup: result.reply_markup,
+				...serviceOpts,
 			});
 		} else {
 			msg = await ctx.reply(result.text, {
 				parse_mode: "HTML",
 				// @ts-ignore - Grammy types are strict, but this is valid
 				reply_markup: result.reply_markup,
+				...serviceOpts,
 			});
 		}
 		return msg?.message_id;

@@ -24,6 +24,8 @@ export interface LinkCategory {
 export interface LinksConfig {
 	/** Header message shown above category buttons */
 	title?: string;
+	/** Disable URL previews in messages (default: true) */
+	disableLinkPreview?: boolean;
 }
 
 export interface LinksDataset {
@@ -42,6 +44,12 @@ export const LINKS_CONFIG_SCHEMA: JSONSchema = {
 			title: "Header Message",
 			description: "Message shown above the category buttons (default: 'Select a category:')",
 			maxLength: 200,
+		},
+		disableLinkPreview: {
+			type: "boolean",
+			title: "Disable Link Preview",
+			description: "Disable URL previews in messages (Telegram only renders the first URL preview)",
+			default: true,
 		},
 		messageTtl: {
 			type: "integer",
@@ -143,6 +151,7 @@ export const DEFAULT_CATEGORIES: LinkCategory[] = [
 
 export const DEFAULT_CONFIG: LinksConfig = {
 	title: "Select a category:",
+	disableLinkPreview: true,
 };
 
 // ============================================================================

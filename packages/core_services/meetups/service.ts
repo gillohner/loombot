@@ -704,7 +704,7 @@ const service = defineService({
 						state: state.replace({ selectedCalendar, timeRange: rangeId }),
 						options: {
 							parse_mode: "HTML",
-							disable_web_page_preview: true,
+							disable_web_page_preview: config.disableLinkPreview ?? true,
 							replaceGroup: MEETUPS_REPLACE_GROUP,
 						},
 					});
