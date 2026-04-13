@@ -1,0 +1,131 @@
+# General-purpose loombot config
+# A sensible default for anyone who wants to run loombot in their community
+# without needing a Pubky identity. Ships with working defaults for
+# help / hello / triggerwords / url_cleaner / new_member. Meetups is present
+# but disabled — turn it on once you've added at least one calendar URI.
+#
+# Features that require writing to Pubky (event_creator / meetup_erstellen)
+# are intentionally absent. See configs/dezentralschweiz.example.yaml for an
+# example that enables them.
+#
+# Setup:
+#   cp configs/general-purpose.example.yaml config.yaml
+#   cp .env.example .env.local
+#   # edit config.yaml and .env.local (BOT_TOKEN at minimum)
+#   deno task config:check
+#   deno task dev
+
+bot:
+  # Telegram user id(s) that should be super-admin everywhere. Optional.
+  admin_ids: []
+  lock_dm_config: false
+
+pubky:
+  # No Pubky identity needed for this profile.
+  enabled: false
+
+features:
+  # ===== Commands ==========================================================
+  help:
+    service: help
+    groups: true
+    dms: true
+    lock: true
+    config:
+      message: "Hi! I'm a community bot. Chat admins can run /config in their chat to pick which features are on."
+      showCommandList: true
+      messageTtl: 0
+
+  hello:
+    service: simple_response
+    groups: false
+    dms: true
+    lock: false
+    config:
+      message: "Hey there 👋"
+      disableLinkPreview: true
+
+  meetups:
+    # Disabled by default because no curated calendars are set yet.
+    # Two ways to turn this on:
+    #   1. Add calendar entries to `config.calendars` below, set groups/dms to
+    #      true, and restart. They'll show up in /config → Calendars for chat
+    #      admins to pick from.
+    #   2. Leave `allow_external_calendars: true` as-is, set groups/dms to
+    #      true, and let chat admins add their own calendar URIs via
+    #      /config → Calendars → Add external calendar.
+    service: meetups
+    groups: false
+    dms: false
+    lock: false
+    allow_external_calendars: true
+    config:
+      title: "Upcoming Events"
+      nexusUrl: "https://nexus.eventky.app"
+      eventkyBaseUrl: "https://eventky.app"
+      maxEvents: 10
+      messageTtl: 300
+      timelineOptions: ["today", "week", "2weeks", "30days"]
+      showCalendarTitle: true
+      linkEvents: true
+      disableLinkPreview: true
+      # Periodic auto-broadcast defaults (chat admins can override these via
+      # /config → 📣 Periodic broadcast once meetups is enabled in their chat).
+      # periodicEnabled: false
+      # periodicDay: 1             # 0 = Sun, 1 = Mon, ..., 6 = Sat
+      # periodicHour: 7            # 0..23, local to periodicTimezone
+      # periodicTimezone: "Europe/Zurich"
+      # periodicRange: "week"      # today | week | 2weeks | 30days
+      # periodicPin: true
+      # periodicUnpinPrevious: true
+      # calendars:
+      #   - id: example
+      #     name: "Your meetup"
+      #     uri: "pubky://<52-char-authorPk>/pub/eventky.app/calendars/<calendarId>"
+
+  # ===== Listeners =========================================================
+
+  new_member:
+    service: new_member
+    groups: true
+    dms: false
+    lock: false
+    # Chat admins can override this text per-chat via /config → Welcome message.
+    config:
+      message: "👋 Welcome {display_name}! Tap /help to see what I can do."
+      mentionUser: true
+      messageTtl: 300
+
+  triggerwords:
+    # Uses the triggerwords service's built-in joke dataset (ethereum +
+    # bitcoin meme responses). To customise, add a
+    #   datasets:
+    #     triggers:
+    #       version: "1.0.0"
+    #       entries: [...]
+    # block here. See configs/dezentralschweiz.example.yaml for a full example.
+    service: triggerwords
+    groups: true
+    dms: false
+    lock: false
+    config:
+      responseProbability: 1.0
+      cooldownSeconds: 60
+      replyToMessage: false
+      messageTtl: 0
+
+  url_cleaner:
+    # Uses the url_cleaner service's built-in alt-frontend mappings
+    # (Twitter/X → Xcancel, YouTube → Invidious, Reddit → Redlib,
+    # Medium → Scribe). Add a `datasets.altFrontends` block to override.
+    service: url_cleaner
+    groups: true
+    dms: false
+    lock: false
+    config:
+      silentIfUnchanged: true
+      showCleanedUrl: true
+      showOriginalUrl: false
+      showRemovedParams: false
+      maxUrlsPerMessage: 5
+      messageTtl: 0

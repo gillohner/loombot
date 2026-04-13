@@ -1,0 +1,481 @@
+# Dezentralschweiz bot
+# Swiss bitcoin-only community. Merges the features from the three original
+# bot configs (DM, Bitcoin group, Meetup-Chat) into one operator config.
+# Chat admins customise per-chat via /config.
+#
+# Setup:
+#   cp configs/dezentralschweiz.example.yaml config.yaml
+#   cp .env.example .env.local
+#   edit both, then:
+#   deno task config:check
+#   deno task dev
+
+bot:
+  # REQUIRED: your Telegram user id so /config works in DMs + any group.
+  admin_ids: []
+  lock_dm_config: false
+
+pubky:
+  # Required for /meetup_erstellen (event_creator publishes to Pubky).
+  enabled: true
+  recovery_file: ./secrets/dezentralschweiz.pkarr
+  passphrase_env: PUBKY_PASSPHRASE
+  # REQUIRED: Telegram chat id of the admin group where pending writes
+  # get posted with Approve / Reject buttons.
+  approval_group_chat_id: 0
+  approval_timeout_hours: 24
+
+features:
+  # ===== Commands ==========================================================
+  help:
+    service: help
+    groups: true
+    dms: true
+    lock: true
+    config:
+      message: "Um ein Meetup zu erstellen, kannst du mir eine DM mit /meetup_erstellen senden."
+      messageTtl: 120
+      showCommandList: true
+      commands:
+        - { command: "/meetups", description: "Anstehende Meetups" }
+        - { command: "/links", description: "Links der Dezentralschweiz Community" }
+        - { command: "/meetup_erstellen", description: "Meetup vorschlagen (nur DM)" }
+
+  meetups:
+    service: meetups
+    groups: true
+    dms: true
+    lock: false
+    # Chat admins can't add their own calendars here — the two calendars below
+    # are the canonical community ones.
+    allow_external_calendars: false
+    config:
+      title: "Upcoming Events"
+      nexusUrl: "https://nexus.eventky.app"
+      eventkyBaseUrl: "https://eventky.app"
+      maxEvents: 20
+      messageTtl: 300
+      timelineOptions: ["today", "week", "2weeks", "30days"]
+      showCalendarTitle: true
+      linkEvents: true
+      disableLinkPreview: true
+      # Periodic broadcast defaults. Every periodicXxx field is an operator
+      # default that individual chat admins can override via
+      # /config → 📣 Periodic broadcast (enable/disable, shift the day/hour,
+      # change the timezone, switch the range, toggle pin behaviour, or send
+      # a preview). Calendars are controlled separately under /config → Calendars.
+      periodicEnabled: false
+      periodicDay: 1
+      periodicHour: 7
+      periodicTimezone: "Europe/Zurich"
+      periodicRange: "week"
+      periodicPin: false
+      periodicUnpinPrevious: false
+      calendars:
+        - id: dezentralschweiz
+          name: "Dezentralschweiz"
+          uri: "pubky://51da3n5m8s6oaq38uqs7jznp6ezbc3qbtmic8oy6fj3g6mokdyco/pub/eventky.app/calendars/0034PXJ40MGQG"
+        - id: bitcoin_alps
+          name: "Bitcoin Alps"
+          uri: "pubky://51da3n5m8s6oaq38uqs7jznp6ezbc3qbtmic8oy6fj3g6mokdyco/pub/eventky.app/calendars/0034PXJPJCMMG"
+
+  meetup_erstellen:
+    service: event_creator
+    groups: false
+    dms: true
+    lock: false
+    config:
+      defaultTimezone: "Europe/Zurich"
+      returnMessageTemplate: "Dein Event wurde genehmigt!\n{title}\n{date}, {time}\n\n{url}"
+      requireLocation: false
+      requireImage: false
+      requireEndTime: false
+      messageTtl: 0
+      calendars:
+        - name: "Dezentralschweiz"
+          uri: "pubky://51da3n5m8s6oaq38uqs7jznp6ezbc3qbtmic8oy6fj3g6mokdyco/pub/eventky.app/calendars/0034PXJ40MGQG"
+          description: "Dezentralschweiz Calendar"
+          isDefault: true
+        - name: "Bitcoin Alps"
+          uri: "pubky://51da3n5m8s6oaq38uqs7jznp6ezbc3qbtmic8oy6fj3g6mokdyco/pub/eventky.app/calendars/0034PXJPJCMMG"
+          description: "Bitcoin Alps Calendar"
+          isDefault: false
+
+  links:
+    service: links
+    groups: true
+    dms: true
+    lock: false
+    config:
+      title: "Wähle eine Kategorie"
+      messageTtl: 300
+    datasets:
+      categories:
+        categories:
+          - name: "Dezentralschweiz Gruppen"
+            links:
+              - { title: "Bitcoin Gruppe 💬", url: "https://t.me/+iu9fNXw0NeE4ZmE0" }
+              - { title: "Meetup Gruppe 🍻", url: "https://t.me/+XEWwvUPaxPBlZjM0" }
+              - { title: "Offtopic Gruppe 👀", url: "https://t.me/joinchat/NL5C5XuMSwczMzJh" }
+          - name: "Regionale Gruppen"
+            links:
+              - { title: "Bitcoin Alps", url: "https://t.me/bitcoin_alps" }
+              - { title: "Bitcoin Baden", url: "https://bitcoinbaden.ch/" }
+              - { title: "Einundzwanzig Meetup Ostschweiz", url: "https://t.me/+dl7U3c1THKE2ODhk" }
+              - { title: "Bitcoin Luzern", url: "https://t.me/bitcoinluzern" }
+              - { title: "21⚡️BITCOIN WINTI", url: "https://t.me/+Tle8OoJnAJw2YWRk" }
+              - { title: "Einundzwanzig Meetup Einsiedeln", url: "https://t.me/+sdT8TNEJIMc2Y2U8" }
+              - { title: "Einezwänzg Solothurn", url: "https://t.me/+BPb0b8yHLbM4NTY5" }
+              - { title: "Einundzwanzig Basel", url: "https://t.me/+LWtqciNZDiNmNTFk" }
+              - { title: "Einundzwanzig Thurgau", url: "https://t.me/Einundzwanzig_Thurgau" }
+              - { title: "Bitcoin Weesen SG", url: "https://www.bitcoinweesen.ch" }
+              - { title: "Bitcoin Oberwallis", url: "https://threema.id/Y64Z59ZW" }
+              - { title: "Einundzwanzig Seeland", url: "https://t.me/Einundzwanzig_Seeland" }
+          - name: "Info Gruppen"
+            links:
+              - { title: "Bitcoin Block Infokanal", url: "https://t.me/+sdT8TNEJIMc2Y2U8" }
+              - { title: "lipa community DE", url: "https://t.me/+c7dJ08A7pOA2YWNk" }
+              - { title: "lipa community EN", url: "https://t.me/+vr5lo1lxJLE4ZTA0" }
+          - name: "Community Links"
+            links:
+              - { title: "Dezentralschweiz Website 🔗", url: "https://dezentralschweiz.ch" }
+              - { title: "Funtoshi", url: "https://funtoshi.com" }
+              - { title: "Bitcoin Chalet in Oberiberg (SZ)", url: "https://x.com/Bitcoin_Chalet" }
+              - { title: "Schweizer Solo Mining Pool", url: "https://blitzpool.yourdevice.ch" }
+          - name: "Online Content"
+            links:
+              - {
+                  title: "Dezentralschweiz Podcast 🎙",
+                  url: "https://feeds.rssblue.com/dezentralschweiz",
+                }
+              - { title: "Bitcoin Reise", url: "https://youtube.com/@bitcoinreise" }
+              - { title: "Berglinde Newsletter", url: "https://news.berglinde.com/" }
+              - {
+                  title: "Berglinde Podcast",
+                  url: "https://www.fountain.fm/show/aed4vKr0mXzHSbXxOOmB",
+                }
+              - { title: "Bitpartikel Blog", url: "https://bitpartikel.com/cryptonite/" }
+              - { title: "Dezentralschweiz Blog", url: "https://dezentralschweiz.ch/blog/" }
+              - { title: "Cercatrova's Blog", url: "https://cercatrova.blog" }
+          - name: "Education"
+            links:
+              - { title: "Education B", url: "https://t.me/CHeducationBTC" }
+              - { title: "Bitcoin Mentoring", url: "https://www.bitcoin-mentoring.me" }
+              - { title: "21Lectures", url: "https://21lectures.com/partner/dezentralschweiz/" }
+              - { title: "Bitcoin Block", url: "https://bitcoinblock.study/" }
+              - { title: "House of Satoshi", url: "https://www.house-of-satoshi.ch/" }
+              - { title: "Satoshee", url: "https://satoshe.space/" }
+          - name: "Vereine"
+            links:
+              - { title: "Bitcoin Baden", url: "https://bitcoinbaden.ch" }
+              - { title: "Bitcoin Alps (Thun)", url: "https://www.bitcoin-alps.ch" }
+              - {
+                  title: "Bitcoin Association Switzerland (BAS)",
+                  url: "https://www.bitcoinassociation.ch",
+                }
+              - { title: "Einundzwanzig", url: "https://einundzwanzig.space" }
+          - name: "Dienstleister"
+            links:
+              - { title: "Lipa", url: "https://lipa.swiss" }
+              - { title: "Pocket", url: "https://pocketbitcoin.com/" }
+              - { title: "BitBox", url: "https://bitbox.swiss/dezentralschweiz" }
+              - { title: "Bitagent", url: "http://bitagent.ch/" }
+              - { title: "Relai", url: "https://relai.app/" }
+              - { title: "Bittr", url: "https://getbittr.com/" }
+              - { title: "ZeusATM", url: "https://zeusatm.ch/" }
+          - name: "Shops"
+            links:
+              - { title: "Dezentralshop 🛒", url: "https://dezentralshop.ch" }
+              - { title: "Funtoshi ♟️", url: "https://funtoshi.com/" }
+              - { title: "Yourdevice", url: "https://yourdevice.ch/" }
+          - name: "Konferenzen"
+            links:
+              - { title: "Bitcoin Baden", url: "https://bitcoinbaden.ch" }
+              - { title: "Swiss Bitcoin Conference", url: "https://swiss-bitcoin-conference.com" }
+              - { title: "Bitcoin Block", url: "https://bitcoinblock.study" }
+
+  # ===== Listeners =========================================================
+
+  new_member:
+    service: new_member
+    groups: true
+    dms: false
+    lock: false
+    # Chat admins can override this text per-chat via /config → Welcome message.
+    config:
+      message: "Hallo {display_name}! Willkommen im Dezentralschweiz Chat ({username}, {user_id})"
+      mentionUser: true
+      messageTtl: 0
+
+  pocketethereum:
+    service: triggerwords
+    groups: true
+    dms: false
+    lock: false
+    config:
+      responseProbability: 1
+      cooldownSeconds: 60
+      replyToMessage: true
+      messageTtl: 1
+    datasets:
+      triggers:
+        version: "1.0.0"
+        description: "pocket ethereum"
+        entries:
+          - enabled: true
+            matchMode: "word"
+            triggers:
+              - "ethereum"
+              - "ether"
+              - "vitalik"
+              - "buterin"
+              - "solidity"
+              - "etherium"
+              - "ithirium"
+              - "isirium"
+              - "eserium"
+              - "ethreum"
+              - "ethirium"
+              - "etherum"
+              - "etheruem"
+              - "eth"
+            responses:
+              - "Ethereum? Hier? Naja, wenn's sein muss, dann bitte nur über <a href='https://pocketethereum.com'>pocketethereum.com</a>"
+              - "Du hast dich wohl im Chat geirrt... aber wenn Ethereum, dann wenigstens mit <a href='https://pocketethereum.com'>pocketethereum.com</a>"
+              - "Hast du dich verlaufen? Das ist kein Ethereum-Spielplatz. Aber wenn's sein muss: <a href='https://pocketethereum.com'>pocketethereum.com</a>"
+              - "Ups, falscher Coin, falscher Chat. Aber hey, wenn's Ethereum sein soll, dann doch bitte mit <a href='https://pocketethereum.com'>pocketethereum.com</a>"
+              - "Ethereum-Träume im Bitcoin-Paradies? Wenn schon, denn schon - mit <a href='https://pocketethereum.com'>pocketethereum.com</a>"
+              - "Ethereum? Hier? Das ist, als würdest du in einem Steakhouse nach Tofu fragen. Aber gut, probier's mit <a href='https://pocketethereum.com'>pocketethereum.com</a>"
+              - "Oh je, Ethereum in der Bitcoin-Höhle? Na, wenn du schon dabei bist, versuch's wenigstens mit <a href='https://pocketethereum.com'>pocketethereum.com</a>"
+              - "Ethereum im Bitcoin-Chat? Das ist wie Ananas auf Pizza. Aber wenn's sein muss: <a href='https://pocketethereum.com'>pocketethereum.com</a>"
+              - "Hast du dich im Blockchain verirrt? Hier gibt's kein Ethereum. Aber wenn du nicht anders kannst: <a href='https://pocketethereum.com'>pocketethereum.com</a>"
+              - "Ethereum? Hier bist du so fehl am Platz wie ein Schneeball in der Hölle. Aber gut, wenn's sein muss: <a href='https://pocketethereum.com'>pocketethereum.com</a>"
+
+  shitcoin_alarm:
+    service: triggerwords
+    groups: true
+    dms: false
+    lock: false
+    config:
+      responseProbability: 1
+      cooldownSeconds: 60
+      replyToMessage: true
+      messageTtl: 0
+    datasets:
+      triggers:
+        version: "1.0.0"
+        description: "shitcoin list trigger"
+        entries:
+          - enabled: true
+            matchMode: "word"
+            triggers:
+              - "binance"
+              - "solana"
+              - "ripple"
+              - "cardano"
+              - "dogecoin"
+              - "doge"
+              - "polkadot"
+              - "chainlink"
+              - "litecoin"
+              - "bitcoin cash"
+              - "bcash"
+              - "bitcoin sv"
+              - "wrapped bitcoin"
+              - "nft"
+              - "nfts"
+              - "web3"
+              - "smart contracts"
+              - "dapp"
+              - "defi"
+              - "uniswap"
+              - "avalanche"
+              - "polygon"
+              - "stellar"
+              - "monero"
+              - "tron"
+              - "cosmos"
+              - "algorand"
+              - "vechain"
+              - "filecoin"
+              - "theta"
+              - "aave"
+              - "elrond"
+              - "zcash"
+              - "decentraland"
+              - "sushiswap"
+              - "pancakeswap"
+              - "shiba inu"
+              - "safemoon"
+              - "bitconnect"
+              - "bitclub"
+              - "onecoin"
+              - "plustoken"
+              - "staking"
+              - "tokenomics"
+              - "airdrop"
+              - "airdrops"
+              - "metaverse"
+              - "gamefi"
+              - "play-to-earn"
+              - "initial coin offering"
+              - "ico"
+              - "token sale"
+              - "oracle"
+              - "memecoin"
+              - "meme coin"
+              - "privacy token"
+              - "utility token"
+              - "yield aggregator"
+              - "liquidity pool"
+              - "tokenization"
+              - "proof-of-stake"
+              - "validator"
+              - "gas fees"
+              - "xrp"
+              - "bsv"
+              - "bch"
+              - "iso20022"
+              - "sol"
+            responses:
+              - "Das hat nichts mit Bitcoin zu tun... zurück zur Schule!"
+              - "Hör auf mit dem Quatsch! Bitcoin ist die einzige Währung, die zählt!"
+              - "Sind wir in einem Shitcoin-Museum oder was? Schau dir Bitcoin an!"
+              - "Bitcoin-Zone! Bitte alle anderen Coins an der Garderobe abgeben."
+              - "Das ist wie Monopolygeld in einem Casino - hier zählt nur Bitcoin!"
+              - "Das klingt nach einem Fall für die Krypto-Müllabfuhr."
+              - "Die Bitcoin-Polizei möchte ein Wörtchen mit dir reden!"
+              - "Die einzige Alternative zu Bitcoin ist mehr Bitcoin!"
+              - "Du sprichst in Rätseln... Ich verstehe nur Bitcoin!"
+              - "Error 404: Shitcoin not found in Bitcoin database."
+              - "Hier gilt: Wer Shitcoin sagt, muss eine Runde Bitcoin spendieren!"
+              - "Ich glaube, dein Krypto-GPS hat dich in die Irre geführt."
+              - "Ich höre nur 'Bla bla bla'. Wo ist das Wort 'Bitcoin'?"
+              - "Klingt nach einem Shitcoin-Unfall. Brauchst du ein Bitcoin-Pflaster?"
+              - "Moment mal, das riecht verdächtig nach... Shitcoin!"
+              - "Oh je, ein Shitcoin-Alarm! Schnell, versteck dich hinter einem Bitcoin!"
+              - "Oops! Da ist wohl jemand auf der falschen Blockchain gelandet."
+              - "Sorry, mein Shitcoin-Filter hat gerade Alarm geschlagen!"
+              - "Tut mir leid, aber mein Bitcoin-Radar hat gerade einen Fremdkörper entdeckt."
+              - "Ups, da hat sich wohl ein Shitcoiner in unseren Chat verirrt!"
+              - "Bitcoin ist unser Mantra. Alles andere ist nur Hintergrundrauschen."
+              - "Ich glaube, du hast dich im Krypto-Universum verirrt. Bitcoin ist der Weg!"
+              - "In diesem Chat gilt das erste Gebot: Du sollst keine Shitcoins neben Bitcoin haben!"
+              - "Ist das ein Shitcoin-Witz? Hier lachen wir nur über Bitcoin-Memes!"
+              - "Klingt nach einem Shitcoin-Notfall. Soll ich den Bitcoin-Rettungsdienst rufen?"
+              - "Shitcoin-Alarm! Bitte begeben Sie sich zum nächsten Bitcoin-Schutzraum!"
+              - "Vorsicht, Shitcoin-Falle! Bleib auf dem sicheren Bitcoin-Pfad!"
+              - "Was ist das für ein seltsamer Coin-Dialekt? Hier wird nur Bitcoin gesprochen!"
+              - "Willkommen im Bitcoin-Orbit! Alle anderen Coins bitte draussen bleiben."
+
+  shitcoiner_alarm:
+    service: triggerwords
+    # In the original bot configs this was NOT enabled in the Bitcoin chat
+    # (probably to avoid it firing on public bitcoin figures). Chat admins
+    # can disable it per-chat via /config if it's noisy.
+    groups: true
+    dms: true
+    lock: false
+    config:
+      responseProbability: 1
+      cooldownSeconds: 0
+      replyToMessage: true
+      messageTtl: 0
+    datasets:
+      triggers:
+        version: "1.0.0"
+        description: "Shitcoiner list"
+        entries:
+          - enabled: true
+            matchMode: "word"
+            triggers:
+              - "sam bankman-fried"
+              - "sam bankman fried"
+              - "sbf"
+              - "bankman-fried"
+              - "bankman fried"
+              - "julian hosp"
+              - "hosp"
+              - "frank thelen"
+              - "thelen"
+              - "freigeist"
+              - "peter schiff"
+              - "schiff"
+              - "euro pacific"
+              - "maurice"
+              - "maurice höfgen"
+              - "höfgen"
+              - "hoefgen"
+              - "makronom"
+              - "nouriel roubini"
+              - "roubini"
+              - "dr. doom"
+              - "warren buffett"
+              - "buffett"
+              - "berkshire hathaway"
+              - "jamie dimon"
+              - "dimon"
+              - "jp morgan"
+              - "chase"
+              - "jpmorgan"
+              - "jerome powell"
+              - "powell"
+              - "fed chairman"
+              - "christine lagarde"
+              - "lagarde"
+              - "ezb"
+              - "ecb"
+              - "do kwon"
+              - "alex mashinsky"
+              - "mashinsky"
+              - "celsius"
+              - "su zhu"
+              - "three arrows capital"
+              - "3ac"
+              - "kyle davies"
+              - "davies"
+              - "anatoly yakovenko"
+              - "yakovenko"
+              - "changpeng zhao"
+              - "cz"
+              - "binance ceo"
+              - "larry fink"
+              - "fink"
+              - "blackrock"
+              - "blackrock ceo"
+              - "co pierre"
+              - "co-pierre"
+            responses:
+              - "Der Name sollte mit einem Warnhinweis versehen werden: 'Kann Bitcoin-Allergien auslösen'."
+              - "Oh, ein Mitglied des 'Bitcoin-verstehe-ich-nicht' Clubs! Willkommen zur Aufklärung."
+              - "Diese Person und Bitcoin - das ist wie Feuer und Wasser. Spoiler: Bitcoin gewinnt!"
+              - "Ein klassischer Fall von 'Bitcoin-Fehldiagnose'. Die Heilung: Mehr Bitcoin studieren!"
+              - "Ach, ein Vertreter der 'Bitcoin-ist-tot' Fraktion! Wie läuft das denn so?"
+              - "Ein wahrer Künstler im Bitcoin-Missverstehen! Bitcoin macht trotzdem weiter."
+              - "Dieser Name und Bitcoin-Verständnis - eine Liebesgeschichte, die nie begann."
+              - "Oh, ein Mitglied der 'Bitcoin-Skeptiker-Vereinigung'! Tick Tock next block."
+              - "Ein Experte darin, Bitcoin falsch zu verstehen. Bitcoin bleibt unbeeindruckt."
+              - "Diese Person zu Bitcoin ist wie ein Fisch zum Fahrradfahren - theoretisch möglich, praktisch... naja."
+              - "Ein lebender Beweis dafür, dass man Bitcoin nicht verstehen muss, um darüber zu reden."
+              - "Das ist jemand, der Bitcoin mit einer Lupe betrachtet und einen Elefanten übersieht."
+              - "Ein Mitglied des exklusiven 'Bitcoin-Verwirrungs-Clubs'! Bitcoin entwickelt sich trotzdem weiter."
+              - "Diese Person und Bitcoin-Expertise - das ist wie kalter Kaffee und Energiedrinks."
+              - "Ein wahrer Meister im Bitcoin-Missverstehen! Bitcoin macht seinen Weg trotzdem."
+              - "Das ist wie ein Schneeball in der Hölle - und Bitcoin ist die Hölle!"
+
+  url_cleaner:
+    service: url_cleaner
+    groups: true
+    dms: true
+    lock: false
+    config:
+      silentIfUnchanged: true
+      showCleanedUrl: true
+      showOriginalUrl: false
+      showRemovedParams: false
+      maxUrlsPerMessage: 10
+      messageTtl: 0
+    # Your Pubky altFrontends dataset was empty, so this falls back to the
+    # service's built-in mappings (Twitter/X → Xcancel, YouTube → Invidious,
+    # Reddit → Redlib, Medium → Scribe). Add a `datasets.altFrontends` block
+    # here if you want to customise.

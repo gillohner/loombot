@@ -102,7 +102,11 @@ function currentSlot(timezone: string): string {
 	return `${y}-${m}-${d}T${h}`;
 }
 
-async function processChatPeriodic(chatId: string, botApi: SchedulerBotApi): Promise<void> {
+async function runPeriodicBroadcast(
+	chatId: string,
+	botApi: SchedulerBotApi,
+	opts: { force: boolean },
+): Promise<void> {
 	// 1. Build snapshot for this chat
 	let snapshot;
 	try {
@@ -112,6 +116,7 @@ async function processChatPeriodic(chatId: string, botApi: SchedulerBotApi): Pro
 			chatId,
 			error: (err as Error).message,
 		});
+		if (opts.force) throw err;
 		return;
 	}
 
@@ -126,39 +131,47 @@ async function processChatPeriodic(chatId: string, botApi: SchedulerBotApi): Pro
 			break;
 		}
 	}
-	if (!meetupsConfig) return;
-
-	// 3. Check if periodic is enabled
-	if (!meetupsConfig.periodicEnabled) return;
+	if (!meetupsConfig) {
+		if (opts.force) throw new Error("meetups feature not enabled in this chat");
+		return;
+	}
 
 	const timezone = meetupsConfig.periodicTimezone ?? "Europe/Zurich";
-	const targetDay = meetupsConfig.periodicDay ?? 1;
-	const targetHour = meetupsConfig.periodicHour ?? 7;
 
-	// 4. Check if current day/hour matches schedule
-	const { day, hour } = getCurrentDayHour(timezone);
-	if (day !== targetDay || hour !== targetHour) return;
+	// 3. Schedule guards — skipped in force mode so the /config preview button works.
+	if (!opts.force) {
+		if (!meetupsConfig.periodicEnabled) return;
 
-	// 5. Last-fired guard — prevent duplicate sends within the same slot
-	const slot = currentSlot(timezone);
-	const lastFired = await getLastFired(chatId);
-	if (lastFired === slot) return;
+		const targetDay = meetupsConfig.periodicDay ?? 1;
+		const targetHour = meetupsConfig.periodicHour ?? 7;
 
-	log.info("scheduler.periodic.firing", { chatId, slot, timezone });
+		const { day, hour } = getCurrentDayHour(timezone);
+		if (day !== targetDay || hour !== targetHour) return;
 
-	// 6. Fetch events
+		const slot = currentSlot(timezone);
+		const lastFired = await getLastFired(chatId);
+		if (lastFired === slot) return;
+
+		log.info("scheduler.periodic.firing", { chatId, slot, timezone });
+	} else {
+		log.info("scheduler.periodic.preview", { chatId, timezone });
+	}
+
+	// 4. Fetch events — use all calendars currently merged onto this chat's route.
 	const rangeId: TimelineRangeId = meetupsConfig.periodicRange ?? "week";
 	const windowEnd = computeEndDate(rangeId);
 	const allCalendarIndices = meetupsConfig.calendars.map((_: unknown, i: number) => i);
 
 	const occurrences = await fetchEvents(meetupsConfig, allCalendarIndices, windowEnd);
 
-	// 7. Format message
+	// 5. Format message
 	const header = buildCalendarHeader(meetupsConfig, "all");
 	const linkBaseUrl = meetupsConfig.linkEvents !== false
 		? (meetupsConfig.eventkyBaseUrl || "https://eventky.app")
 		: undefined;
-	const rangeLabel = rangeId === "week"
+	const rangeLabel = rangeId === "today"
+		? "Today"
+		: rangeId === "week"
 		? "This week"
 		: rangeId === "2weeks"
 		? "Next 2 weeks"
@@ -166,7 +179,7 @@ async function processChatPeriodic(chatId: string, botApi: SchedulerBotApi): Pro
 	const eventList = formatEventsMessage(occurrences, rangeLabel, linkBaseUrl);
 	const text = header + eventList;
 
-	// 8. Unpin previous message if configured
+	// 6. Unpin previous message if configured
 	const shouldPin = meetupsConfig.periodicPin !== false;
 	const shouldUnpin = meetupsConfig.periodicUnpinPrevious !== false;
 
@@ -187,15 +200,15 @@ async function processChatPeriodic(chatId: string, botApi: SchedulerBotApi): Pro
 		}
 	}
 
-	// 9. Send message
+	// 7. Send message
 	const sent = await botApi.sendMessage(chatId, text, {
 		parse_mode: "HTML",
-		disable_web_page_preview: true,
+		disable_web_page_preview: meetupsConfig.disableLinkPreview !== false,
 	});
 
 	log.info("scheduler.periodic.sent", { chatId, messageId: sent.message_id });
 
-	// 10. Pin if configured
+	// 8. Pin if configured
 	if (shouldPin) {
 		try {
 			await botApi.pinChatMessage(chatId, sent.message_id, {
@@ -212,8 +225,27 @@ async function processChatPeriodic(chatId: string, botApi: SchedulerBotApi): Pro
 		}
 	}
 
-	// 11. Update last-fired guard
-	await setLastFired(chatId, slot);
+	// 9. Update last-fired guard (only for real scheduled fires, not previews).
+	if (!opts.force) {
+		const slot = currentSlot(timezone);
+		await setLastFired(chatId, slot);
+	}
+}
+
+async function processChatPeriodic(chatId: string, botApi: SchedulerBotApi): Promise<void> {
+	await runPeriodicBroadcast(chatId, botApi, { force: false });
+}
+
+/**
+ * Fire a periodic broadcast immediately for this chat, bypassing the
+ * enabled / schedule / last-fired guards. Used by the /config preview button
+ * so admins can test settings without waiting for the scheduled slot.
+ */
+export async function runPeriodicNow(
+	chatId: string,
+	botApi: SchedulerBotApi,
+): Promise<void> {
+	await runPeriodicBroadcast(chatId, botApi, { force: true });
 }
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
