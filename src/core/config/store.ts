@@ -62,6 +62,26 @@ export function listKnownChatIds(): string[] {
 	return rows.map((r) => r[0]);
 }
 
+/**
+ * Mark a chat as "seen" by the bot so the scheduler's `listKnownChatIds()`
+ * picks it up even if no admin has ever touched `/config` in it. Upserts a
+ * sentinel row (`feature_id = "__seen__"`, `enabled = NULL`, `data = {}`).
+ * `resolveChatConfig()` in merge.ts ignores feature ids that don't exist in
+ * the operator config, so the sentinel has no other effect.
+ *
+ * Called from the router on every incoming message / command / callback.
+ */
+export function rememberChat(chatId: string): void {
+	if (!chatId) return;
+	const database = ensureDb();
+	database.query(
+		`INSERT INTO chat_feature_overrides (chat_id, feature_id, enabled, data, updated_at)
+		 VALUES (?, '__seen__', NULL, '{}', ?)
+		 ON CONFLICT(chat_id, feature_id) DO NOTHING`,
+		[chatId, Date.now()],
+	);
+}
+
 // ---------------------------------------------------------------------------
 // Per-chat feature overrides
 // ---------------------------------------------------------------------------

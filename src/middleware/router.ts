@@ -7,6 +7,7 @@ import { isBotCommand, normalizeCommand } from "@core/util/utils.ts";
 import { log } from "@core/util/logger.ts";
 import { userIsAdmin } from "@middleware/admin.ts";
 import { pubkyWriter } from "@core/pubky/writer.ts";
+import { rememberChat } from "@core/config/store.ts";
 import { registerConfigUi, routeConfigTextInput, sendMainMenu } from "@middleware/config_ui/mod.ts";
 
 const CORE_PUBLIC_COMMANDS: string[] = ["start"];
@@ -79,6 +80,7 @@ export function buildMiddleware() {
 			if (!isBotCommand(text)) return await next();
 
 			const chatId = String(ctx.chat?.id ?? "");
+			rememberChat(chatId);
 			const token = text.split(" ")[0] ?? "";
 			const command = normalizeCommand(token.replace(/@[^\s]+$/, ""));
 
@@ -160,6 +162,7 @@ export function buildMiddleware() {
 			return;
 		}
 		const chatId = String(ctx.chat?.id ?? "");
+		rememberChat(chatId);
 		log.debug("callback.received", { chatId, data });
 		await buildSnapshot(chatId, { chatType: ctx.chat?.type });
 		const result = await dispatch({
@@ -175,6 +178,7 @@ export function buildMiddleware() {
 	// New chat members → forward to listener services
 	composer.on("message:new_chat_members", async (ctx: Context) => {
 		const chatId = String(ctx.chat?.id ?? "");
+		rememberChat(chatId);
 		await buildSnapshot(chatId, { chatType: ctx.chat?.type });
 		const result = await dispatch({
 			kind: "message",
@@ -187,6 +191,7 @@ export function buildMiddleware() {
 	// Generic message listeners
 	composer.on("message", async (ctx: Context, next: () => Promise<void>) => {
 		const chatId = String(ctx.chat?.id ?? "");
+		rememberChat(chatId);
 		await buildSnapshot(chatId, { chatType: ctx.chat?.type });
 		const result = await dispatch({
 			kind: "message",
