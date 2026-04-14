@@ -7,15 +7,18 @@
 		"@schema/": "./src/types/",
 		"@sdk/": "./packages/sdk/",
 		"@eventky/": "./packages/eventky-specs/",
+		"@services/": "./src/services/",
 		"sqlite": "https://deno.land/x/sqlite@v3.9.1/mod.ts",
 		"@synonymdev/pubky": "npm:@synonymdev/pubky@0.6.0",
 		"zod": "npm:zod@3.23.8",
-		"@noble/hashes/blake3": "npm:@noble/hashes@1.7.1/blake3"
+		"@noble/hashes/blake3": "npm:@noble/hashes@1.7.1/blake3",
+		"@std/yaml": "jsr:@std/yaml@1.0.5"
 	},
 	"tasks": {
-		"dev": "deno run --watch --allow-net --allow-env --allow-run --allow-read=./packages,./src,./secrets,./bot.sqlite,./bot.sqlite-journal,./bot.sqlite-wal,$HOME/.cache/deno,$HOME/Library/Caches/deno,/tmp --allow-write=./bot.sqlite,./bot.sqlite-journal,./bot.sqlite-wal,/tmp --allow-import=deno.land,cdn.skypack.dev,jsr.io,registry.npmjs.org,cdn.npmjs.org --env-file=.env.local src/main.ts",
-		"serve": "WEBHOOK=1 deno run --allow-net --allow-env --allow-run --allow-read=./packages,./src,./secrets,./bot.sqlite,./bot.sqlite-journal,./bot.sqlite-wal,$HOME/.cache/deno,$HOME/Library/Caches/deno,/tmp --allow-write=./bot.sqlite,./bot.sqlite-journal,./bot.sqlite-wal,/tmp --allow-import=deno.land,cdn.skypack.dev,jsr.io,registry.npmjs.org,cdn.npmjs.org --env-file=.env.local src/main.ts",
-		"test": "deno test --allow-env --allow-read=./packages,./src,./bot.sqlite,./bot.sqlite-journal,./bot.sqlite-wal,/tmp --allow-write=/tmp --allow-run --allow-import=deno.land,cdn.skypack.dev,jsr.io,registry.npmjs.org,cdn.npmjs.org",
+		"dev": "deno run --watch --allow-net --allow-env --allow-run --allow-read=./config.yaml,./config.example.yaml,./configs,./packages,./src,./secrets,./bot.sqlite,./bot.sqlite-journal,./bot.sqlite-wal,$HOME/.cache/deno,$HOME/Library/Caches/deno,/tmp --allow-write=./bot.sqlite,./bot.sqlite-journal,./bot.sqlite-wal,/tmp --allow-import=deno.land,cdn.skypack.dev,jsr.io,registry.npmjs.org,cdn.npmjs.org --env-file=.env.local src/main.ts",
+		"serve": "WEBHOOK=1 deno run --allow-net --allow-env --allow-run --allow-read=./config.yaml,./config.example.yaml,./configs,./packages,./src,./secrets,./bot.sqlite,./bot.sqlite-journal,./bot.sqlite-wal,$HOME/.cache/deno,$HOME/Library/Caches/deno,/tmp --allow-write=./bot.sqlite,./bot.sqlite-journal,./bot.sqlite-wal,/tmp --allow-import=deno.land,cdn.skypack.dev,jsr.io,registry.npmjs.org,cdn.npmjs.org --env-file=.env.local src/main.ts",
+		"test": "deno test --allow-env --allow-read=./config.yaml,./config.example.yaml,./configs,./packages,./src,./bot.sqlite,./bot.sqlite-journal,./bot.sqlite-wal,/tmp --allow-write=/tmp --allow-run --allow-import=deno.land,cdn.skypack.dev,jsr.io,registry.npmjs.org,cdn.npmjs.org",
+		"config:check": "deno run --allow-read=./config.yaml,./config.example.yaml,./configs --allow-env --allow-import=deno.land,jsr.io,registry.npmjs.org,cdn.npmjs.org scripts/validate-config.ts",
 		"lint": "deno lint",
 		"fmt": "deno fmt"
 	},

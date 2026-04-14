@@ -421,7 +421,7 @@ export const DEFAULT_ALT_FRONTENDS: AltFrontendsDataset = {
 			replacement: "https://l.opnxng.com/$1",
 			enabled: true,
 		},
-{
+		{
 			name: "Medium → Scribe",
 			pattern: "^https?://(?:www\\.)?medium\\.com/(.+)$",
 			replacement: "https://scribe.rip/$1",

@@ -1,17 +1,18 @@
 // src/main.ts
-import bot from "./bot.ts";
+import { createBot } from "./bot.ts";
 import { webhookCallback } from "grammy";
 import { cleanupAll } from "@core/ttl/store.ts";
 import { startScheduler } from "@core/scheduler/scheduler.ts";
 import { log } from "@core/util/logger.ts";
 
-async function startupTtlCleanup() {
+async function startupTtlCleanup(
+	api: { deleteMessage: (chatId: number, id: number) => Promise<unknown> },
+) {
 	try {
 		const removed = await cleanupAll(async (m) => {
 			if (m.platform === "telegram") {
 				try {
-					// Best effort API call; we have bot instance already so use raw api
-					await bot.api.deleteMessage(m.chatId as number, m.messageId);
+					await api.deleteMessage(m.chatId as number, m.messageId);
 				} catch (err) {
 					log.debug("ttl.startup.delete.failed", { error: (err as Error).message });
 				}
@@ -24,8 +25,9 @@ async function startupTtlCleanup() {
 }
 
 if (import.meta.main) {
+	const bot = await createBot();
 	const useWebhook = Deno.env.get("WEBHOOK") === "1";
-	await startupTtlCleanup();
+	await startupTtlCleanup(bot.api);
 	startScheduler(bot.api);
 	if (useWebhook) {
 		const handle = webhookCallback(bot, "std/http");

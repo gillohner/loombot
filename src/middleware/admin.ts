@@ -1,15 +1,28 @@
 // src/middleware/admin.ts
-// Utilities to determine whether a user is an administrator for a chat.
-// If BOT_ADMIN_IDS is set, only those users can use admin commands.
-// Otherwise falls back to: private chats → everyone is admin; groups → Telegram chat admins.
+// Determines whether a user is an administrator for the current chat.
+//
+// Rules:
+//  - If the user's Telegram id is listed in config.yaml `bot.admin_ids`, they
+//    are admin everywhere (super-admin).
+//  - In private chats: admin = !lock_dm_config (any DM user is admin of their
+//    own DM unless the operator locked DMs).
+//  - In groups/supergroups: Telegram chat administrators are admins of that chat.
 
-import { CONFIG } from "@core/config.ts";
+import { getOperatorConfig } from "@core/config/runtime.ts";
 
-// Minimal subset of grammY context we rely on (structural typing)
 export interface AdminCheckContextLike {
 	chat?: { id: number | string; type: string };
 	from?: { id: number };
 	getChatAdministrators?: () => Promise<unknown[]>;
+}
+
+function getBotAdminIdSet(): Set<string> {
+	try {
+		const cfg = getOperatorConfig();
+		return new Set(cfg.bot.admin_ids.map((x) => String(x)));
+	} catch {
+		return new Set();
+	}
 }
 
 export async function userIsAdmin(ctx: AdminCheckContextLike): Promise<boolean> {
@@ -18,16 +31,17 @@ export async function userIsAdmin(ctx: AdminCheckContextLike): Promise<boolean> 
 	const chat = ctx.chat;
 	if (!chat) return false;
 
-	// Bot owner (BOT_ADMIN_IDS) is always admin everywhere
-	if (CONFIG.botAdminIds.length > 0 && CONFIG.botAdminIds.includes(String(userId))) {
-		return true;
+	const adminSet = getBotAdminIdSet();
+	if (adminSet.has(String(userId))) return true;
+
+	if (chat.type === "private") {
+		try {
+			return !getOperatorConfig().bot.lock_dm_config;
+		} catch {
+			return true;
+		}
 	}
 
-	// DMs: if locked, only bot owners (checked above) can use admin commands
-	// If unlocked, any DM user is treated as admin (original behavior)
-	if (chat.type === "private") return !CONFIG.lockDmConfig;
-
-	// Groups/supergroups: Telegram chat admins can manage their own chat's config
 	if (ctx.getChatAdministrators) {
 		try {
 			const admins = await ctx.getChatAdministrators();
@@ -36,7 +50,7 @@ export async function userIsAdmin(ctx: AdminCheckContextLike): Promise<boolean> 
 				if (candidate.user?.id === userId) return true;
 			}
 			return false;
-		} catch (_err) {
+		} catch {
 			return false;
 		}
 	}

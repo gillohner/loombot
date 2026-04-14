@@ -4,4 +4,5 @@
 .plan
 secrets/
 bot.sqlite
-README.md
+config.yaml
+secrets/*

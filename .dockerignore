@@ -1,0 +1,21 @@
+# Build-context excludes
+.git
+.gitignore
+.github
+.env
+.env.local
+.env.*.local
+bot.sqlite
+bot.sqlite-*
+secrets/
+node_modules
+.claude
+.plan
+*.md
+!README.md
+.vscode
+.idea
+docker-compose.yml
+Dockerfile.dev
+config.yaml
+formatted_config.json

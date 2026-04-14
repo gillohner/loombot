@@ -64,15 +64,16 @@ export interface MeetupsState {
 	timeRange?: string;
 }
 
-export type TimelineRangeId = "week" | "2weeks" | "30days";
+export type TimelineRangeId = "today" | "week" | "2weeks" | "30days";
 
 export const TIMELINE_LABELS: Record<TimelineRangeId, string> = {
+	today: "Today",
 	week: "This week",
 	"2weeks": "Next 2 weeks",
 	"30days": "Next 30 days",
 };
 
-export const DEFAULT_TIMELINE_OPTIONS: TimelineRangeId[] = ["week", "2weeks", "30days"];
+export const DEFAULT_TIMELINE_OPTIONS: TimelineRangeId[] = ["today", "week", "2weeks", "30days"];
 
 // ============================================================================
 // Nexus API Types
@@ -213,12 +214,12 @@ export const MEETUPS_CONFIG_SCHEMA: JSONSchema = {
 			type: "array",
 			title: "Timeline Options",
 			description:
-				"Timeline filter buttons to show: 'week' (this week), '2weeks' (next 2 weeks), '30days' (next 30 days)",
+				"Timeline filter buttons to show: 'today' (rest of today), 'week' (this week), '2weeks' (next 2 weeks), '30days' (next 30 days)",
 			items: {
 				type: "string",
-				enum: ["week", "2weeks", "30days"],
+				enum: ["today", "week", "2weeks", "30days"],
 			},
-			default: ["week", "2weeks", "30days"],
+			default: ["today", "week", "2weeks", "30days"],
 		},
 		messageTtl: {
 			type: "integer",
@@ -271,7 +272,7 @@ export const MEETUPS_CONFIG_SCHEMA: JSONSchema = {
 			type: "string",
 			title: "Periodic Range",
 			description: "Timeline range for periodic broadcast",
-			enum: ["week", "2weeks", "30days"],
+			enum: ["today", "week", "2weeks", "30days"],
 			default: "week",
 		},
 		disableLinkPreview: {
@@ -483,6 +484,11 @@ export function computeEndDate(rangeId: TimelineRangeId): Date {
 	const now = new Date();
 
 	switch (rangeId) {
+		case "today": {
+			const endOfDay = new Date(now);
+			endOfDay.setHours(23, 59, 59, 999);
+			return endOfDay;
+		}
 		case "week": {
 			const dayOfWeek = now.getDay();
 			const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
@@ -566,7 +572,7 @@ export const DEFAULT_CONFIG: Partial<MeetupsConfig> = {
 	showCalendarTitle: true,
 	linkEvents: true,
 	eventkyBaseUrl: "https://eventky.app",
-	timelineOptions: ["week", "2weeks", "30days"],
+	timelineOptions: ["today", "week", "2weeks", "30days"],
 	periodicEnabled: false,
 	periodicDay: 1,
 	periodicHour: 7,

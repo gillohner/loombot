@@ -1,0 +1,151 @@
+# loombot operator configuration
+#
+# Copy this file to `config.yaml` and edit it. Everything the bot needs is here,
+# with the exception of secrets (see .env.example / .env.local).
+#
+# Two audiences for this file:
+#   1. You, the operator — set bot-wide defaults, trigger words, calendars, etc.
+#   2. Chat admins — once the bot is running, they use /config in their chat to
+#      toggle features and pick from the options you define here.
+
+bot:
+  # Telegram user IDs that are always admin everywhere (super-admins).
+  # Leave empty in groups to rely on Telegram chat admins.
+  admin_ids: []
+
+  # DMs (private chats):
+  #   false → any DM user is admin of their own DM (default, convenient for end users)
+  #   true  → only users in admin_ids can configure DMs
+  lock_dm_config: false
+
+pubky:
+  # Optional. Enables publishing to the Pubky homeserver (e.g. event creator,
+  # pubkywriter service). If you don't have a Pubky identity, leave this `false`
+  # and the related features are auto-disabled everywhere.
+  enabled: false
+
+  # Path to a .pkarr recovery file created with Pubky Ring or the Pubky CLI.
+  recovery_file: ./secrets/operator.pkarr
+
+  # Name of the env var in .env.local that holds the recovery-file passphrase.
+  passphrase_env: PUBKY_PASSPHRASE
+
+  # Telegram chat where pending writes are posted for approval (inline
+  # Approve/Reject buttons). Set to a group you control.
+  approval_group_chat_id: 0
+
+  # How long a pending write waits for approval before it expires.
+  approval_timeout_hours: 24
+
+# ---------------------------------------------------------------------------
+# Features
+# ---------------------------------------------------------------------------
+# Each entry is a feature the bot exposes. The key is the feature id — for
+# command-style services it is also the command name (without a leading slash).
+#
+# Common fields on every feature:
+#   service:    registry name of the underlying service (see src/services/registry.ts)
+#   groups:     default-enabled in groups/supergroups (true/false)
+#   dms:        default-enabled in DMs (true/false)
+#   lock:       if true, chat admins cannot toggle this feature per chat
+#   config:     passed to the service as serviceConfig (shape is service-specific)
+#   datasets:   passed to the service as datasets (shape is service-specific)
+#
+# Chat admins override these per-chat via the /config inline menu in their chat.
+
+features:
+
+  # ---- Commands ----------------------------------------------------------
+  help:
+    service: help
+    groups: true
+    dms: true
+    lock: true
+    config:
+      message: "Hi! I'm a community bot. Tap /config if you're a chat admin to pick which features are on."
+      showCommandList: true
+
+  hello:
+    service: simple_response
+    groups: false
+    dms: true
+    config:
+      message: "Hey there 👋"
+      disableLinkPreview: true
+
+  meetups:
+    service: meetups
+    groups: true
+    dms: true
+    # Chat admins can pick which calendars are shown.
+    allow_external_calendars: true
+    config:
+      title: "Upcoming Events"
+      maxEvents: 10
+      timelineOptions: ["today", "week", "2weeks", "30days"]
+      eventkyBaseUrl: "https://eventky.app"
+      # Curated calendars. Chat admins pick from this list in /config.
+      # `id` is a stable short handle; `uri` is the full pubky:// address.
+      calendars:
+        - id: example_berlin
+          name: "Berlin Pubky Meetups"
+          uri: "pubky://REPLACE_WITH_CALENDAR_AUTHOR_PK/pub/eventky.app/calendars/REPLACE_WITH_CAL_ID"
+        - id: example_prague
+          name: "Prague Pubky Loombot"
+          uri: "pubky://REPLACE_WITH_CALENDAR_AUTHOR_PK/pub/eventky.app/calendars/REPLACE_WITH_CAL_ID"
+
+  newevent:
+    service: event_creator
+    # Auto-disabled everywhere if pubky.enabled is false (this service
+    # needs to write to the operator's Pubky homeserver).
+    groups: false
+    dms: true
+    config:
+      defaultTimezone: "Europe/Zurich"
+      requireLocation: false
+      requireImage: false
+      requireEndTime: false
+
+  # ---- Listeners ---------------------------------------------------------
+
+  new_member:
+    service: new_member
+    groups: true
+    dms: false
+    config:
+      message: "👋 Welcome {display_name}! Tap /help to see what I can do."
+      mentionUser: true
+
+  triggerwords:
+    service: triggerwords
+    groups: true
+    dms: false
+    config:
+      responseProbability: 1.0
+      cooldownSeconds: 30
+      replyToMessage: false
+    # Operator-curated trigger word list. Chat admins can't edit this
+    # per-chat; they can only toggle the whole feature on/off.
+    datasets:
+      triggers:
+        version: "1.0.0"
+        description: "Community trigger words"
+        entries:
+          - triggers: ["shitcoin", "altcoin"]
+            responses:
+              - "🐂 Bitcoin only."
+              - "⚡ There's one chain that matters."
+            matchMode: "word"
+          - triggers: ["gas fee", "gas fees"]
+            responses:
+              - "⛽ Ethereum gas fees strike again."
+            matchMode: "contains"
+
+  url_cleaner:
+    service: url_cleaner
+    groups: true
+    dms: false
+    config:
+      silentIfUnchanged: true
+      showCleanedUrl: true
+      maxUrlsPerMessage: 5

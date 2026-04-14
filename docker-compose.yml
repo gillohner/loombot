@@ -1,0 +1,58 @@
+# loombot — drop-in docker-compose template
+#
+# Quick start:
+#   1. Copy this file and .env.example into any folder:
+#        mkdir loombot && cd loombot
+#        curl -O https://raw.githubusercontent.com/gillohner/loombot/master/docker-compose.yml
+#        curl -O https://raw.githubusercontent.com/gillohner/loombot/master/.env.example
+#        mv .env.example .env
+#   2. Edit .env — set BOT_TOKEN at minimum
+#   3. docker compose up -d
+#
+# All persistent state (config.yaml, SQLite, pkarr secrets) lives in the
+# named volume `loombot_data` — mount a host path instead if you want to edit
+# config.yaml directly from the host.
+
+services:
+  loombot:
+    # Swap for a pinned tag (e.g. ghcr.io/gillohner/loombot:v0.1.0) in prod.
+    image: ghcr.io/gillohner/loombot:latest
+    # Or build from source:
+    # build: .
+    container_name: loombot
+    restart: unless-stopped
+    environment:
+      # --- Required -----------------------------------------------------
+      BOT_TOKEN: ${BOT_TOKEN:?BOT_TOKEN is required — get one from @BotFather}
+
+      # --- Profile selection -------------------------------------------
+      # One of: minimal | general-purpose | dezentralschweiz
+      # First boot copies the matching configs/*.example.yaml to /data/config.yaml.
+      # Subsequent boots leave it alone so your edits stick.
+      PROFILE: ${PROFILE:-general-purpose}
+
+      # --- Common overrides (applied on every boot to config.yaml) ------
+      # Comma-separated Telegram user ids that are super-admin everywhere.
+      BOT_ADMIN_IDS: ${BOT_ADMIN_IDS:-}
+      # 1 = only super-admins can /config in DMs.
+      LOCK_DM_CONFIG: ${LOCK_DM_CONFIG:-0}
+
+      # --- Pubky (optional) --------------------------------------------
+      PUBKY_ENABLED: ${PUBKY_ENABLED:-0}
+      PUBKY_PASSPHRASE: ${PUBKY_PASSPHRASE:-}
+      PUBKY_APPROVAL_GROUP_CHAT_ID: ${PUBKY_APPROVAL_GROUP_CHAT_ID:-}
+      PUBKY_APPROVAL_TIMEOUT_HOURS: ${PUBKY_APPROVAL_TIMEOUT_HOURS:-24}
+      # Pubky recovery file: either mount one into /data/secrets/operator.pkarr
+      # (see volumes below) or base64-encode it here and the entrypoint writes
+      # it out on first boot. Leave empty if you're using a volume mount.
+      PUBKY_RECOVERY_FILE_B64: ${PUBKY_RECOVERY_FILE_B64:-}
+
+      # --- Runtime tuning (rarely changed) -----------------------------
+      LOG_MIN_LEVEL: ${LOG_MIN_LEVEL:-info}
+    volumes:
+      - loombot_data:/data
+      # If you prefer host-path mounting instead of the named volume, use:
+      # - ./data:/data
+
+volumes:
+  loombot_data:
