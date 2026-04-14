@@ -1,6 +1,7 @@
 // packages/core_services/url-cleaner/constants.ts
 // URL Cleaner service constants, schemas, and validation
-import type { DatasetSchemas, JSONSchema } from "@sdk/mod.ts";
+import type { DatasetSchemas, JSONSchema, ValidationError, ValidationResult } from "@sdk/mod.ts";
+export type { ValidationError, ValidationResult };
 
 export const URL_CLEANER_SERVICE_ID = "url_cleaner" as const;
 export const URL_CLEANER_VERSION = "1.0.0" as const;
@@ -206,16 +207,6 @@ export const URL_CLEANER_DATASET_SCHEMAS: DatasetSchemas = {
 // ============================================================================
 // Validation
 // ============================================================================
-
-export interface ValidationError {
-	path: string;
-	message: string;
-}
-
-export interface ValidationResult {
-	valid: boolean;
-	errors: ValidationError[];
-}
 
 /**
  * Validates an alt-frontend mapping

@@ -1,7 +1,14 @@
 // packages/core_services/new-member/constants.ts
 // New Member Welcome - Listener service that welcomes new members to a group
 
-import type { DatasetSchemas, JSONSchema } from "@sdk/mod.ts";
+import {
+	type DatasetSchemas,
+	escapeHtml,
+	type JSONSchema,
+	type ValidationError,
+	type ValidationResult,
+} from "@sdk/mod.ts";
+export type { ValidationError, ValidationResult };
 
 // ============================================================================
 // Service Identity
@@ -19,16 +26,6 @@ export interface WelcomeConfig {
 	message: string;
 	/** Whether to mention the user with @ (default: true) */
 	mentionUser?: boolean;
-}
-
-export interface ValidationError {
-	path: string;
-	message: string;
-}
-
-export interface ValidationResult {
-	valid: boolean;
-	errors: ValidationError[];
 }
 
 // ============================================================================
@@ -105,13 +102,6 @@ export interface UserInfo {
 	username?: string;
 	firstName?: string;
 	lastName?: string;
-}
-
-function escapeHtml(text: string): string {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;");
 }
 
 export function formatWelcomeMessage(

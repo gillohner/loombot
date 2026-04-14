@@ -50,7 +50,7 @@ export function clearServiceState(p: KeyParts): void {
 }
 
 export interface ApplyParams extends KeyParts {
-	directive: import("@schema/services.ts").StateDirective; // updated path
+	directive: import("@sdk/mod.ts").StateDirective;
 }
 
 export function applyStateDirective(p: ApplyParams): StoredState | undefined {
@@ -69,11 +69,6 @@ export function applyStateDirective(p: ApplyParams): StoredState | undefined {
 		}
 	}
 	return existing; // exhaustive for now
-}
-
-// Diagnostics helper (unused in prod code)
-export function _dumpState(): Record<string, StoredState> {
-	return Object.fromEntries(DATA.entries());
 }
 
 // Active flow helpers -------------------------------------------------------

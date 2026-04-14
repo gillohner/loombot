@@ -87,6 +87,19 @@ export function inlineKeyboard(): InlineKeyboardBuilder {
 }
 
 /**
+ * Escape HTML-special characters (`&`, `<`, `>`) so user-provided text is
+ * safe to embed inside `parse_mode: "HTML"` messages. Does not escape `"` or
+ * `'` — those are only unsafe inside HTML attribute values, which the bot
+ * doesn't build dynamically.
+ */
+export function escapeHtml(text: string): string {
+	return text
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;");
+}
+
+/**
  * Builder for creating cross-platform UI elements.
  */
 export class UIBuilder {

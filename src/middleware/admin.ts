@@ -56,11 +56,3 @@ export async function userIsAdmin(ctx: AdminCheckContextLike): Promise<boolean> 
 	}
 	return false;
 }
-
-export function assertAdmin(isAdmin: boolean): asserts isAdmin {
-	if (!isAdmin) throw new Error("admin_required");
-}
-
-export async function requireAdmin(ctx: AdminCheckContextLike): Promise<boolean> {
-	return await userIsAdmin(ctx);
-}

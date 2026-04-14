@@ -213,34 +213,3 @@ export function getExpiredPendingWrites(): PendingWrite[] {
 	);
 	return rows.map(rowToPending);
 }
-
-export function getPendingWritesByStatus(status: PendingWrite["status"]): PendingWrite[] {
-	const database = ensureDb();
-	const rows = database.query<PendingWriteRow>(
-		`${PENDING_SELECT} WHERE status = ? ORDER BY created_at DESC`,
-		[status],
-	);
-	return rows.map(rowToPending);
-}
-
-export function deletePendingWrite(id: string): void {
-	const database = ensureDb();
-	database.query(`DELETE FROM pending_writes WHERE id = ?`, [id]);
-}
-
-export function countPendingWritesByUser(userId: string, status?: PendingWrite["status"]): number {
-	const database = ensureDb();
-	if (status) {
-		const row = database
-			.query<[number]>(
-				`SELECT COUNT(*) FROM pending_writes WHERE user_id = ? AND status = ?`,
-				[userId, status],
-			)
-			.at(0);
-		return row?.[0] ?? 0;
-	}
-	const row = database
-		.query<[number]>(`SELECT COUNT(*) FROM pending_writes WHERE user_id = ?`, [userId])
-		.at(0);
-	return row?.[0] ?? 0;
-}

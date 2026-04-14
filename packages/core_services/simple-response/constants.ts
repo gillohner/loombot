@@ -1,7 +1,8 @@
 // packages/core_services/simple-response/constants.ts
 // Simple Response - Single command service that responds with a configured message
 
-import type { DatasetSchemas, JSONSchema } from "@sdk/mod.ts";
+import type { DatasetSchemas, JSONSchema, ValidationError, ValidationResult } from "@sdk/mod.ts";
+export type { ValidationError, ValidationResult };
 
 // ============================================================================
 // Service Identity
@@ -19,16 +20,6 @@ export interface SimpleResponseConfig {
 	message: string;
 	/** Whether to disable link previews (default: false) */
 	disableLinkPreview?: boolean;
-}
-
-export interface ValidationError {
-	path: string;
-	message: string;
-}
-
-export interface ValidationResult {
-	valid: boolean;
-	errors: ValidationError[];
 }
 
 // ============================================================================

@@ -1,7 +1,7 @@
 // packages/core_services/new-member/service_test.ts
 import { assertEquals } from "jsr:@std/assert@1";
 import type { MessageEvent } from "@sdk/mod.ts";
-import type { ServiceResponse } from "@sdk/runtime.ts";
+import type { ServiceResponse } from "@sdk/mod.ts";
 import service from "./service.ts";
 import { formatWelcomeMessage } from "./constants.ts";
 

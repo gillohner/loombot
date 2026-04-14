@@ -152,16 +152,3 @@ function applyFeatureOverrides(
 
 	return base;
 }
-
-// Query helpers used by the /config inline menu.
-
-export function listTogglableFeatures(resolved: ResolvedChatConfig): ResolvedFeature[] {
-	return resolved.features.filter((f) => !f.lock);
-}
-
-export function findFeature(
-	resolved: ResolvedChatConfig,
-	featureId: string,
-): ResolvedFeature | undefined {
-	return resolved.features.find((f) => f.featureId === featureId);
-}

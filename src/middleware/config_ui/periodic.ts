@@ -9,6 +9,7 @@ import { getChatFeatureOverride, setChatFeatureOverride } from "@core/config/sto
 import { clearPendingInput, setPendingInput } from "@middleware/config_ui/state.ts";
 import { runPeriodicNow } from "@core/scheduler/scheduler.ts";
 import { t } from "@core/i18n/mod.ts";
+import { escapeHtml } from "@sdk/mod.ts";
 import type { InlineKeyboard } from "@middleware/config_ui/types.ts";
 
 const DEFAULT_ENABLED = false;
@@ -123,13 +124,6 @@ function setPeriodicFields(
 
 function tag(isOverride: boolean): string {
 	return isOverride ? t("config_ui.periodic.tag_override") : t("config_ui.periodic.tag_default");
-}
-
-function escapeHtml(text: string): string {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;");
 }
 
 function rangeLabel(id: string): string {

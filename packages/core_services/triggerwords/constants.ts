@@ -1,7 +1,8 @@
 // packages/core_services/triggerwords/constants.ts
 // Triggerwords - Listener service that responds with jokes when trigger words are detected
 
-import type { DatasetSchemas, JSONSchema } from "@sdk/mod.ts";
+import type { DatasetSchemas, JSONSchema, ValidationError, ValidationResult } from "@sdk/mod.ts";
+export type { ValidationError, ValidationResult };
 
 // ============================================================================
 // Service Identity
@@ -38,16 +39,6 @@ export interface TriggerwordsConfig {
 	cooldownSeconds?: number;
 	/** Whether to reply to the message or send standalone (default: false) */
 	replyToMessage?: boolean;
-}
-
-export interface ValidationError {
-	path: string;
-	message: string;
-}
-
-export interface ValidationResult {
-	valid: boolean;
-	errors: ValidationError[];
 }
 
 // ============================================================================

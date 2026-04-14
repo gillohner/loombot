@@ -7,6 +7,7 @@ import { getOperatorConfig } from "@core/config/runtime.ts";
 import { getChatFeatureOverride, setChatFeatureOverride } from "@core/config/store.ts";
 import { clearPendingInput, setPendingInput } from "@middleware/config_ui/state.ts";
 import { t } from "@core/i18n/mod.ts";
+import { escapeHtml } from "@sdk/mod.ts";
 import type { InlineKeyboard } from "@middleware/config_ui/types.ts";
 
 function currentWelcome(chatId: string, featureId: string): {
@@ -122,11 +123,4 @@ export async function handleWelcomeInput(
 	});
 	clearPendingInput(chatId, userId);
 	await ctx.reply(t("config_ui.welcome.updated"));
-}
-
-function escapeHtml(text: string): string {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;");
 }

@@ -1,7 +1,7 @@
 // packages/core_services/triggerwords/service_test.ts
 import { assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import type { MessageEvent } from "@sdk/mod.ts";
-import type { ServiceResponse } from "@sdk/runtime.ts";
+import type { ServiceResponse } from "@sdk/mod.ts";
 import service from "./service.ts";
 import { findMatchingEntry, pickRandomResponse, type TriggerEntry } from "./constants.ts";
 

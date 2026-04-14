@@ -2,6 +2,7 @@
 // Date/time and URL formatting utilities
 
 import { EVENTKY_APP_BASE } from "../constants.ts";
+export { escapeHtml } from "@sdk/mod.ts";
 
 /**
  * Format DD.MM.YYYY date and HH:MM time into ISO datetime string.
@@ -48,16 +49,6 @@ export function applyTemplate(
 		.replace(/{title}/g, vars.title)
 		.replace(/{date}/g, vars.date)
 		.replace(/{time}/g, vars.time);
-}
-
-/**
- * Escape HTML special characters for safe embedding in HTML messages.
- */
-export function escapeHtml(text: string): string {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;");
 }
 
 /**

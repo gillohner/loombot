@@ -1,7 +1,7 @@
 // packages/core_services/url-cleaner/service_test.ts
 import { assertEquals, assertStringIncludes } from "jsr:@std/assert@1";
 import type { MessageEvent } from "@sdk/mod.ts";
-import type { ServiceResponse } from "@sdk/runtime.ts";
+import type { ServiceResponse } from "@sdk/mod.ts";
 import service from "./service.ts";
 
 // Helper to create a message event

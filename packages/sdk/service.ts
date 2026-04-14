@@ -78,5 +78,3 @@ export function defineService(def: ServiceDefinition): DefinedService {
 		},
 	}) as DefinedService;
 }
-
-export { AUTO_SENTINEL }; // re-exported for tests if needed

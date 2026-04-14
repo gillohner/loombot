@@ -251,3 +251,19 @@ export function validateSchema(
 
 // Re-export for convenience
 export type { JSONSchema as ServiceConfigSchema };
+
+/**
+ * Shared validation result types used by services that hand-roll config /
+ * dataset validators (Zod can't run inside the sandboxed subprocess).
+ * A service's `validateConfig()` / `validateDataset()` pushes `ValidationError`
+ * entries and returns a `ValidationResult`.
+ */
+export interface ValidationError {
+	path: string;
+	message: string;
+}
+
+export interface ValidationResult {
+	valid: boolean;
+	errors: ValidationError[];
+}

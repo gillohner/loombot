@@ -27,7 +27,7 @@ Telegram → grammY Bot → Router Middleware → Dispatcher
                                                 ↓
                                           Sandbox Host (Deno subprocess, zero permissions)
                                                 ↓
-                                          Service Bundle (SDK + service code)
+                                          Service source file (resolves @sdk/ via import map)
                                                 ↓
                                           ServiceResponse → Telegram Adapter → User
 ```
