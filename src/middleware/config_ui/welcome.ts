@@ -79,9 +79,18 @@ export async function promptEditWelcome(
 	});
 	await ctx.answerCallbackQuery();
 	await ctx.reply(
-		"Send me the new welcome message. You can use <code>{display_name}</code>, " +
-			"<code>{username}</code>, <code>{first_name}</code>, <code>{last_name}</code>, " +
-			"<code>{user_id}</code>. Send /cancel to abort.",
+		[
+			"👋 <b>Send me the new welcome message.</b>",
+			"",
+			"Available placeholders:",
+			"• <code>{display_name}</code>",
+			"• <code>{username}</code>",
+			"• <code>{first_name}</code>",
+			"• <code>{last_name}</code>",
+			"• <code>{user_id}</code>",
+			"",
+			"Send /cancel to keep the current message.",
+		].join("\n"),
 		{ parse_mode: "HTML" },
 	);
 }
@@ -107,18 +116,30 @@ export async function handleWelcomeInput(
 ): Promise<void> {
 	const trimmed = text.trim();
 	if (trimmed.length === 0) {
-		await ctx.reply("Welcome message can't be empty. Try again or send /cancel.");
+		await ctx.reply(
+			[
+				"Welcome message can't be empty.",
+				"",
+				"Send /cancel to keep the current message, or try again.",
+			].join("\n"),
+		);
 		return;
 	}
 	if (trimmed.length > 2000) {
-		await ctx.reply("Too long (max 2000 chars). Try again or send /cancel.");
+		await ctx.reply(
+			[
+				`Too long — max 2000 characters, yours was ${trimmed.length}.`,
+				"",
+				"Send /cancel to keep the current message, or try again with a shorter version.",
+			].join("\n"),
+		);
 		return;
 	}
 	setChatFeatureOverride(chatId, featureId, {
 		data: { welcome_override: trimmed },
 	});
 	clearPendingInput(chatId, userId);
-	await ctx.reply("Welcome message updated. Tap /config to review.");
+	await ctx.reply("✅ Welcome message updated. Tap /config to review.");
 }
 
 function escapeHtml(text: string): string {

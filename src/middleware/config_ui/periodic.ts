@@ -375,8 +375,13 @@ export async function promptEditTimezone(
 	});
 	await ctx.answerCallbackQuery();
 	await ctx.reply(
-		"Send me an IANA timezone like <code>Europe/Zurich</code>, <code>America/New_York</code>, " +
-			"or <code>Pacific/Auckland</code>. Send /cancel to abort.",
+		[
+			"🌍 <b>Send me an IANA timezone.</b>",
+			"",
+			"Examples: <code>Europe/Zurich</code>, <code>America/New_York</code>, <code>Pacific/Auckland</code>.",
+			"",
+			"Send /cancel to keep the current timezone.",
+		].join("\n"),
 		{ parse_mode: "HTML" },
 	);
 }
@@ -390,21 +395,36 @@ export async function handleTimezoneInput(
 ): Promise<void> {
 	const trimmed = text.trim();
 	if (trimmed.length === 0) {
-		await ctx.reply("Timezone can't be empty. Try again or send /cancel.");
+		await ctx.reply(
+			[
+				"Timezone can't be empty.",
+				"",
+				"Send one like <code>Europe/Zurich</code>, or /cancel to keep the current timezone.",
+			].join("\n"),
+			{ parse_mode: "HTML" },
+		);
 		return;
 	}
 	try {
 		new Intl.DateTimeFormat("en-US", { timeZone: trimmed }).format(new Date());
 	} catch {
 		await ctx.reply(
-			"That's not a valid IANA timezone. Example: <code>Europe/Zurich</code>.",
+			[
+				`<code>${escapeHtml(trimmed)}</code> isn't a valid IANA timezone.`,
+				"",
+				"Examples: <code>Europe/Zurich</code>, <code>America/New_York</code>, <code>Pacific/Auckland</code>.",
+				"",
+				"Send /cancel to keep the current timezone, or try again.",
+			].join("\n"),
 			{ parse_mode: "HTML" },
 		);
 		return;
 	}
 	setPeriodicFields(chatId, featureId, { timezone: trimmed });
 	clearPendingInput(chatId, userId);
-	await ctx.reply(`Timezone set to <code>${escapeHtml(trimmed)}</code>.`, { parse_mode: "HTML" });
+	await ctx.reply(`✅ Timezone set to <code>${escapeHtml(trimmed)}</code>.`, {
+		parse_mode: "HTML",
+	});
 }
 
 export async function triggerPreview(

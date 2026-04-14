@@ -174,8 +174,13 @@ export async function promptAddExternalCalendar(
 	});
 	await ctx.answerCallbackQuery();
 	await ctx.reply(
-		"Send me the <code>pubky://</code> calendar URI you want to add. " +
-			"Send /cancel to abort.",
+		[
+			"📅 <b>Send me a <code>pubky://</code> calendar URI to add.</b>",
+			"",
+			"Format: <code>pubky://&lt;52-char-pk&gt;/pub/eventky.app/calendars/&lt;calendarId&gt;</code>",
+			"",
+			"Send /cancel to go back without adding anything.",
+		].join("\n"),
 		{ parse_mode: "HTML" },
 	);
 }
@@ -191,7 +196,13 @@ export async function handleExternalCalendarInput(
 	const trimmed = text.trim();
 	if (!isValidCalendarUri(trimmed)) {
 		await ctx.reply(
-			"That doesn't look like a valid calendar URI. It should start with <code>pubky://</code> and point to <code>/pub/eventky.app/calendars/&lt;id&gt;</code>.",
+			[
+				"That doesn't look like a valid calendar URI.",
+				"",
+				"Expected: <code>pubky://&lt;52-char-pk&gt;/pub/eventky.app/calendars/&lt;calendarId&gt;</code>",
+				"",
+				"Send /cancel to go back, or try again.",
+			].join("\n"),
 			{ parse_mode: "HTML" },
 		);
 		return;
@@ -199,13 +210,19 @@ export async function handleExternalCalendarInput(
 
 	const meta = await fetchCalendarMeta(trimmed);
 	if (!meta) {
-		await ctx.reply("Couldn't reach that calendar. Check the URI and try again.");
+		await ctx.reply(
+			[
+				"Couldn't reach that calendar — the URI may be wrong or the homeserver may be down.",
+				"",
+				"Send /cancel to go back, or try again.",
+			].join("\n"),
+		);
 		return;
 	}
 
 	const { selected, external, usingDefaults } = getSelection(chatId, featureId);
 	if (external.includes(meta.uri)) {
-		await ctx.reply("That calendar is already in the list.");
+		await ctx.reply("That calendar is already in the list. Tap /config to review.");
 		clearPendingInput(chatId, userId);
 		return;
 	}
@@ -217,5 +234,5 @@ export async function handleExternalCalendarInput(
 	});
 	clearPendingInput(chatId, userId);
 	const label = meta.name ? `"${meta.name}"` : "the calendar";
-	await ctx.reply(`Added ${label}. Tap /config to review.`, { parse_mode: "HTML" });
+	await ctx.reply(`✅ Added ${label}. Tap /config to review.`, { parse_mode: "HTML" });
 }

@@ -183,8 +183,13 @@ export async function routeConfigTextInput(ctx: Context): Promise<boolean> {
 		return true;
 	}
 
-	// Any other slash command interrupts the pending input without consuming it.
-	if (text.startsWith("/")) return false;
+	// Any other slash command means the user wants to do something else —
+	// drop the pending input so they aren't stuck in the flow, and let the
+	// command fall through to the router for normal dispatch.
+	if (text.startsWith("/")) {
+		clearPendingInput(chatId, userId);
+		return false;
+	}
 
 	if (pending.kind === "await_external_calendar_uri") {
 		await handleExternalCalendarInput(ctx, chatId, userId, text, pending.featureId);
