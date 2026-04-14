@@ -1,4 +1,4 @@
-# Pubky Bot Builder — Telegram
+# loombot — Telegram community bot
 
 A Deno-based Telegram bot framework with sandboxed service execution and Pubky decentralized storage
 integration. Services are isolated in zero-permission Deno subprocesses and communicate via

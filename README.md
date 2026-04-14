@@ -57,10 +57,101 @@ active in that chat.
 
 ## Prerequisites
 
-- [Deno](https://deno.com) 1.45+
+- [Deno](https://deno.com) 1.45+ (only for `From source` / development — the Docker image ships Deno
+  internally)
 - A Telegram bot token from [@BotFather](https://t.me/BotFather)
+- Your own Telegram user id (for `BOT_ADMIN_IDS`) — DM [@userinfobot](https://t.me/userinfobot) and
+  it replies with your numeric id
 - _(Optional)_ A [Pubky](https://pubky.org) identity if you want the `event_creator` feature or any
-  other service that writes to a homeserver
+  other service that writes to a homeserver. See [Pubky setup](#pubky-setup-optional) below.
+
+### Required Telegram bot permissions
+
+After adding the bot to a group (via `/addme` or Telegram's "Add to Group"), make it an admin with
+at least:
+
+- **Delete Messages** — the bot trims its own old inline menus (`replaceGroup`), deletes URL-
+  cleaner trigger messages, and optionally auto-deletes help/meetups replies via `messageTtl`
+- **Pin Messages** — needed for the periodic meetups broadcast (`periodicPin: true`)
+- **Read Messages** — enabled by default, but if you created the bot a while ago, double-check that
+  privacy mode is **off** via BotFather → `/mybots` → _your bot_ → Bot Settings → Group Privacy →
+  "Turn off"; otherwise the bot only sees commands addressed to it directly, not arbitrary messages,
+  which breaks the listener services (`triggerwords`, `url_cleaner`, `new_member`)
+
+### Finding Telegram ids
+
+- **Your user id**: DM [@userinfobot](https://t.me/userinfobot) → it replies with your numeric id
+- **A group chat id**: add [@getidsbot](https://t.me/getidsbot) to the group, run `/start`, copy the
+  `chat_id` from its reply, then remove the helper bot. Group ids look like `-1001234567890`
+  (negative, and supergroups have the `-100` prefix)
+
+These ids go into `BOT_ADMIN_IDS` and `PUBKY_APPROVAL_GROUP_CHAT_ID` in your env file.
+
+---
+
+## Pubky setup (optional)
+
+You only need this if you enabled a Pubky-gated feature in `config.yaml` (e.g. `event_creator`) or
+are running the `dezentralschweiz` profile. Features gated on `requiresPubky: true` in the service
+registry are auto-disabled when `pubky.enabled: false`, so skipping this section is fine for the
+default general-purpose profile.
+
+### 1. Create a recovery keypair
+
+Pick one of:
+
+- **[Pubky Ring](https://pubky.org/ring)** (mobile app, easiest) — create an identity, then export a
+  `.pkarr` recovery file from the settings menu. Pick a strong passphrase during export and write it
+  down — you'll need it below.
+- **[Pubky CLI](https://github.com/pubky/pubky)** — follow the repo's readme to generate and export
+  a keypair. The CLI is a better fit if you already manage secrets via your shell.
+
+Either way you end up with a `.pkarr` file on disk.
+
+### 2. Register the keypair with a homeserver
+
+A fresh recovery file is an identity but has no home yet. Before the bot can write events through it
+you need to sign in to a Pubky homeserver once (Pubky Ring does this for you during identity
+creation). If you used the CLI, follow the repo's "sign up" instructions against a homeserver of
+your choice. Public homeserver lists live at [pubky.org](https://pubky.org).
+
+### 3. Point the bot at the file
+
+**Local dev:**
+
+```bash
+mkdir -p secrets
+mv ~/Downloads/operator.pkarr secrets/operator.pkarr
+chmod 600 secrets/operator.pkarr
+```
+
+Then in `.env.local`:
+
+```dotenv
+PUBKY_PASSPHRASE=<the passphrase you set at export time>
+```
+
+And in `config.yaml`:
+
+```yaml
+pubky:
+  enabled: true
+  recovery_file: ./secrets/operator.pkarr
+  passphrase_env: PUBKY_PASSPHRASE
+  approval_group_chat_id: -1001234567890 # your admin group chat id
+```
+
+**Docker:** see [Supplying a Pubky recovery file](#supplying-a-pubky-recovery-file) below — you can
+either bind-mount the file or pass it as a base64 env var.
+
+### 4. Create calendars (optional, for meetups)
+
+If you want `/meetups` to show events, you need at least one calendar URI. Create one at
+[eventky.app](https://eventky.app) — sign in with a Pubky identity, create a calendar, and copy its
+`pubky://` URI from the share sheet. Add it to `config.yaml` under
+`features.meetups.config.calendars` as a curated option chat admins can pick from. The
+`/meetup_erstellen` / `event_creator` service writes events through your bot's keypair to whatever
+calendar(s) the user selects.
 
 ---
 
@@ -149,6 +240,9 @@ an inline-keyboard menu:
 - **📅 Calendars** — pick which operator-curated meetup calendars to show in this chat. If the
   operator set `allow_external_calendars: true`, admins can also add a freeform
   `pubky://…/calendars/…` URI.
+- **📣 Periodic broadcast** — toggle the weekly auto-post of upcoming events, and shift its day,
+  hour, timezone, range, and pin behaviour per-chat. Use _Send preview now_ to test settings
+  immediately.
 - **👋 Welcome message** — override the default new-member greeting for this chat only. Supports
   `{display_name}`, `{username}`, `{first_name}`, `{last_name}`, `{user_id}` placeholders.
 
@@ -364,6 +458,15 @@ Services talk to the bot via stdin/stdout JSON and return `ServiceResponse` obje
   `.env.local`.
 - **"unknown service"** — the `service:` value doesn't match anything in `src/services/registry.ts`.
   Typos are the usual cause.
+- **Bot doesn't respond to messages in a group** — Telegram bots have _privacy mode_ on by default,
+  which only delivers messages that mention or reply to the bot. Turn it off: BotFather → `/mybots`
+  → _your bot_ → Bot Settings → Group Privacy → "Turn off". Then kick and re-invite the bot to the
+  group for the change to take effect.
+- **Periodic broadcast never fires in a group** — check that at least one admin has opened `/config`
+  in the chat at some point (the scheduler only enumerates chats the bot has registered as "known").
+  Any incoming message since commit `71af1ce` also auto-registers the chat, so this should be a
+  non-issue on recent builds. Also verify the bot has **Pin Messages** permission if
+  `periodicPin: true`.
 - **Pubky-dependent features silently disabled** — check the `config.loaded` startup log: if
   `pubkyEnabled: false`, features with `requiresPubky: true` in the registry are filtered out. Flip
   `pubky.enabled: true` in `config.yaml` and set `PUBKY_PASSPHRASE` in `.env.local`.
@@ -373,8 +476,20 @@ Services talk to the bot via stdin/stdout JSON and return `ServiceResponse` obje
 - **`/config` doesn't appear** — make sure you're a Telegram admin in the group, or that your user
   id is in `bot.admin_ids`.
 - **Per-chat overrides not picked up** — snapshots auto-clear on restart, but for a running process
-  you may need to wait up to 10 s for the in- memory cache to expire. `/config` actions invalidate
+  you may need to wait up to 10 s for the in-memory cache to expire. `/config` actions invalidate
   the cache immediately.
+- **Validating config inside a running container**:
+  ```bash
+  docker exec -it loombot deno run --allow-read=/data --allow-env \
+      --allow-import=deno.land,jsr.io,registry.npmjs.org,cdn.npmjs.org \
+      /app/scripts/validate-config.ts /data/config.yaml
+  ```
+- **"No such image" when running `docker compose up`** — `docker-compose.yml` defaults to
+  `ghcr.io/gillohner/loombot:latest`. If that tag isn't published yet, build locally by uncommenting
+  the `build: .` line in `docker-compose.yml`.
+- **Pinning a Docker version** — the shipped compose file uses `:latest` for convenience. Replace
+  with a tagged release (e.g. `ghcr.io/gillohner/loombot:v0.1.0`) before deploying to production so
+  upgrades are deliberate.
 
 ---
 

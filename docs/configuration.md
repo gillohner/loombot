@@ -3,6 +3,10 @@
 Bot configuration is a single operator-owned `config.yaml` loaded at startup, plus per-chat
 overrides that chat admins set via the inline `/config` menu.
 
+If you're setting up for the first time, the [README](../README.md) is the faster path — it covers
+Docker deployment, finding Telegram ids, and the Pubky recovery-file walkthrough. This document is
+the reference for what goes inside `config.yaml` once you're past the quick-start.
+
 ## Getting started
 
 Copy one of the example profiles from `configs/` to the project root as `config.yaml` and edit it. A
@@ -21,6 +25,10 @@ Two example profiles ship in `configs/`:
 - `general-purpose.example.yaml` — no Pubky identity, sensible defaults. Good starting point.
 - `dezentralschweiz.example.yaml` — Pubky-enabled, Swiss bitcoin community profile with a full set
   of services wired up. Useful reference for the feature schema.
+
+A third tiny skeleton lives at the repo root as `config.example.yaml` (selectable as
+`PROFILE=minimal` in Docker) — useful as a start-from-scratch starting point that documents the
+field shapes inline.
 
 ## config.yaml structure
 
@@ -109,6 +117,9 @@ editing the file):
 | `PUBKY_APPROVAL_GROUP_CHAT_ID` | `pubky.approval_group_chat_id`    |
 | `PUBKY_APPROVAL_TIMEOUT_HOURS` | `pubky.approval_timeout_hours`    |
 
+See the [README](../README.md#finding-telegram-ids) for concrete walkthroughs on finding Telegram
+user/chat ids and creating a Pubky recovery file.
+
 ## Passing config to services
 
 Services receive their merged feature config on every event:
@@ -156,6 +167,23 @@ via `datasetSchemas` in its manifest and the loader validates them at startup.
 Admins are determined by `bot.admin_ids` (super-admins everywhere) plus Telegram chat admins in
 groups. In private chats, any user is admin of their own DM unless `bot.lock_dm_config: true`, in
 which case only super-admins can `/config`.
+
+## Per-chat override shapes
+
+Once the bot is running, chat admins use the `/config` inline menu. Four sections are available
+depending on which features the operator enabled:
+
+| Section                   | Writes                                                                                          |
+| ------------------------- | ----------------------------------------------------------------------------------------------- |
+| 🧩 **Features**           | `{ enabled: bool }` per feature (ignored if the feature has `lock: true` in `config.yaml`)      |
+| 📅 **Calendars**          | `{ selected_calendar_ids: string[], external_calendars: string[] }` under the `meetups` feature |
+| 📣 **Periodic broadcast** | `{ periodic: { enabled, day, hour, timezone, range, pin, unpin_previous } }` under `meetups`    |
+| 👋 **Welcome message**    | `{ welcome_override: string }` under the `new_member` feature                                   |
+
+Every field in the override is optional and falls through to the operator default when unset — e.g.
+a chat that overrides only `periodic.hour` still inherits the operator's `periodicTimezone`,
+`periodicDay`, etc. `resolveChatConfig()` in `src/core/config/merge.ts` is the single source of
+truth for how these merge.
 
 ## Snapshot caching
 

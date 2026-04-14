@@ -1,11 +1,15 @@
 # Building Services
 
-This guide covers how to create services for the Pubky Bot Builder.
+This guide covers how to create services for loombot. Services are operator-shipped code that the
+bot registers in `src/services/registry.ts`, configures in `config.yaml`, and executes in isolated
+`deno run` subprocesses.
 
 ## Service Fundamentals
 
 A service is a self-contained module that handles specific bot functionality. Services are defined
-using the SDK and run in isolated sandboxes for security.
+using the SDK in `packages/sdk/` and run in isolated sandbox subprocesses — the bot's main process
+spawns `deno run` against the service source file directly (no pre-bundling) and communicates via
+JSON over stdin/stdout.
 
 ### Service Definition Structure
 

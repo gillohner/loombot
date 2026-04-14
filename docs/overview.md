@@ -1,7 +1,7 @@
-# Pubky Bot Builder - Architecture Overview
+# loombot — Architecture Overview
 
-This document provides an overview of the Pubky Bot Builder system architecture, how services work,
-and how to configure and extend the bot.
+This document provides an overview of the loombot system architecture, how services work, and how to
+configure and extend the bot.
 
 ## High-Level Architecture
 
