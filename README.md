@@ -331,8 +331,8 @@ bot:
 
 ## Adding a new service
 
-1. Create the bundle under `packages/core_services/<name>/service.ts` using `defineService()` from
-   `@sdk/mod.ts`.
+1. Create the service file at `packages/core_services/<name>/service.ts` using `defineService()`
+   from `@sdk/mod.ts`.
 2. Register it in `src/services/registry.ts` with its entry path and kind (`single_command` |
    `command_flow` | `listener`), plus any `net:` allow- list or `requiresPubky: true`.
 3. Add a `features.<featureId>` block to `config.yaml` referencing the registry name.

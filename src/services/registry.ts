@@ -1,12 +1,13 @@
 // src/services/registry.ts
-// Static registry of bundled services. Maps the `service:` key in config.yaml
-// to a service bundle path + its natural kind. New bundled services are added
-// here.
+// Static registry of operator-shipped services. Maps the `service:` key in
+// config.yaml to the service's source file path + its natural kind. New
+// services are added here.
 
 export type ServiceKind = "single_command" | "command_flow" | "listener";
 
 export interface ServiceRegistryEntry {
-	/** Entry point path, relative to project root (used by the bundler). */
+	/** Source file path, relative to project root. The sandbox host spawns
+	 *  `deno run` against this path directly — no pre-bundling. */
 	entry: string;
 	/** Natural kind of the service. Determines whether the feature becomes a
 	 *  command route or a listener route in the snapshot. */

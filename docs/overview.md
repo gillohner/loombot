@@ -19,7 +19,6 @@ flowchart TB
     
     subgraph Execution["Service Execution"]
         Sandbox[Sandbox Host]
-        Bundle[Service Bundles]
     end
     
     subgraph Services["Services"]
@@ -45,14 +44,12 @@ flowchart TB
     Grammy --> Router
     Router --> Dispatcher
     Dispatcher --> Sandbox
-    Sandbox --> Bundle
-    Bundle --> S1 & S2 & S3 & S4
+    Sandbox --> S1 & S2 & S3 & S4
     
     Dispatcher <--> State
     Dispatcher <--> Snapshot
     Snapshot --> SQLite
     State --> SQLite
-    Snapshot <-.->|Config Fetch| Pubky
     
     S4 -.->|pubkyWrite response| Dispatcher
     Dispatcher -->|Queue Write| PW
