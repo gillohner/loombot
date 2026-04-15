@@ -106,14 +106,14 @@ features:
           name: "Einundzwanzig Basel"
           uri: "pubky://51da3n5m8s6oaq38uqs7jznp6ezbc3qbtmic8oy6fj3g6mokdyco/pub/eventky.app/calendars/0034YV25W5S6G"
 
-  terminfindung:
+  meetup_planen:
     # Terminumfrage: Organisator schlägt 2–5 Slots vor, Gruppe stimmt ab,
     # Gewinner-Slot kann direkt in /meetup_erstellen übernommen werden.
     service: when2meet
     groups: true
     dms: true
     lock: false
-    command: terminfindung
+    command: meetup_planen
     config:
       maxSlots: 5
       messageTtl: 0
